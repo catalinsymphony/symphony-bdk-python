@@ -80,7 +80,7 @@ class AbstractDatafeedLoop(ABC):
     ):
         """
 
-        :param api: DatafeedApi or DatahoseApi to request the service
+        :param datafeed_api: DatafeedApi or DatahoseApi to request the service
         :param session_service: the SessionService to get user session information
         :param auth_session: the AuthSession instance used to get session and key manager tokens
         :param config: the bot configuration
