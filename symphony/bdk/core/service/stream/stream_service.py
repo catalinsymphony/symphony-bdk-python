@@ -3,6 +3,7 @@ from typing import AsyncGenerator, List
 from symphony.bdk.core.auth.auth_session import AuthSession
 from symphony.bdk.core.config.model.bdk_retry_config import BdkRetryConfig
 from symphony.bdk.core.retry import retry
+from symphony.bdk.core.service.ai.tool import tool
 from symphony.bdk.core.service.pagination import offset_based_pagination
 from symphony.bdk.gen.agent_api.share_api import ShareApi
 from symphony.bdk.gen.agent_model.share_content import ShareContent
@@ -54,6 +55,7 @@ class OboStreamService:
         self._retry_config = retry_config
 
     @retry
+    @tool("Create a new one-to-one Instant Message (IM) with a user.")
     async def create_im(self, user_id: int) -> Stream:
         """Create a new single party instant message conversation between the caller and specified user.
         The caller is implicitly included in the members of the created chat.
@@ -69,6 +71,7 @@ class OboStreamService:
         )
 
     @retry
+    @tool("Create a new chatroom with specified attributes.")
     async def create_room(self, room_attributes: V3RoomAttributes) -> V3RoomDetail:
         """Creates a new chatroom.
         If no  attributes are specified, the room is created as a private chatroom.
@@ -83,6 +86,7 @@ class OboStreamService:
         )
 
     @retry
+    @tool("Get information about a specific stream (IM, MIM, or Room).")
     async def get_stream(self, stream_id: str) -> V2StreamAttributes:
         """Returns information about a particular stream.
         Wraps the `Stream Info V2 <https://developers.symphony.com/restapi/reference/stream-info-v2>`_ endpoint.
@@ -95,6 +99,7 @@ class OboStreamService:
         )
 
     @retry
+    @tool("Get detailed information about a specific room.")
     async def get_room_info(self, room_id: str) -> V3RoomDetail:
         """Get information about a particular room.
         Wraps the `Room Info V3 <https://developers.symphony.com/restapi/reference/room-info-v3>`_ endpoint.
@@ -107,6 +112,7 @@ class OboStreamService:
         )
 
     @retry
+    @tool("List streams the user is a member of, based on a filter.")
     async def list_streams(
         self, stream_filter: StreamFilter, skip: int = 0, limit: int = 50
     ) -> List[StreamAttributes]:
@@ -127,6 +133,7 @@ class OboStreamService:
         )
 
     @retry
+    @tool("List all streams the user is a member of, handling pagination automatically.")
     async def list_all_streams(
         self, stream_filter: StreamFilter, chunk_size: int = 50, max_number: int = None
     ) -> AsyncGenerator[StreamAttributes, None]:
@@ -147,6 +154,7 @@ class OboStreamService:
         return offset_based_pagination(list_streams_one_page, chunk_size, max_number)
 
     @retry
+    @tool("Search for rooms based on specified criteria.")
     async def search_rooms(
         self,
         query: V2RoomSearchCriteria,
@@ -171,6 +179,7 @@ class OboStreamService:
             session_token=await self._auth_session.session_token,
         )
 
+    @tool("Search for all rooms matching criteria, handling pagination automatically.")
     async def search_all_rooms(
         self,
         query: V2RoomSearchCriteria,
@@ -195,6 +204,7 @@ class OboStreamService:
         return offset_based_pagination(search_rooms_one_page, chunk_size, max_number)
 
     @retry
+    @tool("Update the attributes of an existing room.")
     async def update_room(self, room_id: str, room_attributes: V3RoomAttributes) -> V3RoomDetail:
         """Updates the attributes of an existing chatroom.
         Wraps the `Update Room V3 <https://developers.symphony.com/restapi/reference/update-room-v3>`_ endpoint.
@@ -210,6 +220,7 @@ class OboStreamService:
         )
 
     @retry
+    @tool("Add a member to an existing room.")
     async def add_member_to_room(self, user_id: int, room_id: str):
         """Adds a member to an existing room.
         Wraps the `Add Member <https://developers.symphony.com/restapi/reference/add-member>`_ endpoint.
@@ -225,6 +236,7 @@ class OboStreamService:
         )
 
     @retry
+    @tool("Remove a member from an existing room.")
     async def remove_member_from_room(self, user_id: int, room_id: str):
         """Removes a member from an existing room.
         Wraps the `Remove Member <https://developers.symphony.com/restapi/reference/remove-member>`_ endpoint.
@@ -240,6 +252,7 @@ class OboStreamService:
         )
 
     @retry
+    @tool("Share a structured object (e.g., from a third-party) into a stream.")
     async def share(self, stream_id: str, content: ShareContent) -> V2Message:
         """Share third-party content, such as a news article, into the specified stream.
         The stream can be a chat room, an IM, or an MIM.
@@ -257,6 +270,7 @@ class OboStreamService:
         )
 
     @retry
+    @tool("Promote a user to be an owner of a room.")
     async def promote_user_to_room_owner(self, user_id: int, room_id: str):
         """Promotes user to owner of the chat room.
         Wraps the `Promote Owner <https://developers.symphony.com/restapi/reference/promote-owner>`_ endpoint.
@@ -272,6 +286,7 @@ class OboStreamService:
         )
 
     @retry
+    @tool("Demote a room owner to a regular participant.")
     async def demote_owner_to_room_participant(self, user_id: int, room_id: str):
         """Demotes room owner to a participant in the chat room.
         Wraps the `Demote Owner <https://developers.symphony.com/restapi/reference/demote-owner>`_ endpoint.
@@ -291,6 +306,7 @@ class StreamService(OboStreamService):
     """Service class to manage streams."""
 
     @retry
+    @tool("Get information about a particular Instant Message (IM).")
     async def get_im_info(self, im_id: str) -> V1IMDetail:
         """Get information about a particular IM.
         Wraps the `IM info <https://developers.symphony.com/restapi/reference/im-info> endpoint`
@@ -303,6 +319,7 @@ class StreamService(OboStreamService):
         )
 
     @retry
+    @tool("Activate or deactivate a room.", is_admin=True)
     async def set_room_active(self, room_id: str, active: bool) -> RoomDetail:
         """Deactivates or reactivates a chatroom. At creation time, the chatroom is activated by default.
         Wraps the `De/Reactivate Room <https://developers.symphony.com/restapi/reference/de-or-re-activate-room>`_
@@ -319,6 +336,7 @@ class StreamService(OboStreamService):
         )
 
     @retry
+    @tool("Update the attributes of an existing Instant Message (IM).")
     async def update_im(self, im_id: str, im_attributes: V1IMAttributes) -> V1IMDetail:
         """Updates the attributes of an existing im.
         Wraps the `Update IM <https://developers.symphony.com/restapi/reference/update-im>`_ endpoint.
@@ -334,6 +352,7 @@ class StreamService(OboStreamService):
         )
 
     @retry
+    @tool("Create a new IM or MIM between a list of users (non-inclusive).", is_admin=True)
     async def create_im_admin(self, user_ids: List[int]) -> Stream:
         """Create a new single or multi party instant message conversation.
         At least two user IDs must be provided or an error response will be sent.
@@ -355,6 +374,7 @@ class StreamService(OboStreamService):
         )
 
     @retry
+    @tool("Activate or deactivate a room using admin privileges.", is_admin=True)
     async def set_room_active_admin(self, room_id: str, active: bool) -> RoomDetail:
         """Deactivates or reactivates a chatroom via AC Portal.
 
@@ -369,6 +389,7 @@ class StreamService(OboStreamService):
         )
 
     @retry
+    @tool("List all streams across the enterprise, with filtering.", is_admin=True)
     async def list_streams_admin(
         self, stream_filter: V2AdminStreamFilter, skip: int = 0, limit: int = 50
     ) -> V2AdminStreamList:
@@ -388,6 +409,7 @@ class StreamService(OboStreamService):
             session_token=await self._auth_session.session_token,
         )
 
+    @tool("List all streams across the enterprise, handling pagination automatically.", is_admin=True)
     async def list_all_streams_admin(
         self, stream_filter: V2AdminStreamFilter, chunk_size=50, max_number=None
     ) -> AsyncGenerator[V2AdminStreamInfo, None]:
@@ -408,6 +430,7 @@ class StreamService(OboStreamService):
         return offset_based_pagination(list_streams_admin_one_page, chunk_size, max_number)
 
     @retry
+    @tool("List all streams a specific user is a member of.", is_admin=True)
     async def list_user_streams_admin(
         self,
         uid: int,
@@ -432,6 +455,7 @@ class StreamService(OboStreamService):
             session_token=await self._auth_session.session_token,
         )
 
+    @tool("List all streams for a user, handling pagination automatically.", is_admin=True)
     async def list_all_user_streams_admin(
         self,
         uid: int,
@@ -456,6 +480,7 @@ class StreamService(OboStreamService):
         return offset_based_pagination(list_streams_one_page, chunk_size, max_number)
 
     @retry
+    @tool("List the members of a specific stream (IM, MIM, or Room).", is_admin=True)
     async def list_stream_members(
         self, stream_id: str, skip: int = 0, limit: int = 100
     ) -> V2MembershipList:
@@ -474,6 +499,7 @@ class StreamService(OboStreamService):
             session_token=await self._auth_session.session_token,
         )
 
+    @tool("List all members of a stream, handling pagination automatically.", is_admin=True)
     async def list_all_stream_members(
         self, stream_id: str, chunk_size: int = 50, max_number=None
     ) -> AsyncGenerator[V2MemberInfo, None]:
@@ -493,6 +519,7 @@ class StreamService(OboStreamService):
         return offset_based_pagination(list_stream_members_one_page, chunk_size, max_number)
 
     @retry
+    @tool("List the members of a specific room.")
     async def list_room_members(self, room_id: str) -> List[MemberInfo]:
         """Lists the current members of an existing room.
         Wraps the `Room Members <https://developers.symphony.com/restapi/reference#room-members>`_ endpoint.

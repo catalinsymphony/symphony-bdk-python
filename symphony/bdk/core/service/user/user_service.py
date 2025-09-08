@@ -6,6 +6,7 @@ from typing import AsyncGenerator, List, Union
 from symphony.bdk.core.auth.auth_session import AuthSession
 from symphony.bdk.core.config.model.bdk_retry_config import BdkRetryConfig
 from symphony.bdk.core.retry import retry
+from symphony.bdk.core.service.ai.tool import tool
 from symphony.bdk.core.service.pagination import cursor_based_pagination, offset_based_pagination
 from symphony.bdk.core.service.user.model.delegate_action_enum import DelegateActionEnum
 from symphony.bdk.core.service.user.model.role_id import RoleId
@@ -61,6 +62,7 @@ class OboUserService:
         self._retry_config = retry_config
 
     @retry
+    @tool("Search for users by their IDs.")
     async def list_users_by_ids(
         self, user_ids: List[int], local: bool = False, active: bool = None
     ) -> V2UserList:
@@ -88,6 +90,7 @@ class OboUserService:
         return await self._users_api.v3_users_get(**params)
 
     @retry
+    @tool("Search for users by their email addresses.")
     async def list_users_by_emails(
         self, emails: List[str], local: bool = False, active: bool = None
     ) -> V2UserList:
@@ -115,6 +118,7 @@ class OboUserService:
         return await self._users_api.v3_users_get(**params)
 
     @retry
+    @tool("Search for users by their usernames.")
     async def list_users_by_usernames(
         self, usernames: List[str], active: bool = None
     ) -> V2UserList:
@@ -139,6 +143,7 @@ class OboUserService:
         return await self._users_api.v3_users_get(**params)
 
     @retry
+    @tool("Search for users based on various criteria (e.g., name, company, title).")
     async def search_users(
         self, query: UserSearchQuery, local: bool = False, skip: int = 0, limit: int = 50
     ) -> UserSearchResults:
@@ -165,6 +170,7 @@ class OboUserService:
         }
         return await self._users_api.v1_user_search_post(**params)
 
+    @tool("Search for all users based on various criteria, handling pagination automatically.")
     async def search_all_users(
         self,
         query: UserSearchQuery,
@@ -195,6 +201,7 @@ class OboUserService:
         return offset_based_pagination(search_users_one_page, chunk_size, max_number)
 
     @retry
+    @tool("Make a list of users follow a specific user.")
     async def follow_user(self, follower_ids: List[int], user_id: int) -> None:
         """Make a list of users to start following a specific user.
         See: `Follow User <https://developers.symphony.com/restapi/reference/follow-user>`_
@@ -210,6 +217,7 @@ class OboUserService:
         await self._user_api.v1_user_uid_follow_post(**params)
 
     @retry
+    @tool("Make a list of users unfollow a specific user.")
     async def unfollow_user(self, follower_ids: List[int], user_id: int) -> None:
         """Make a list of users to stop following a specific user.
         See: `Unfollow User <https://developers.symphony.com/restapi/reference/unfollow-user>`_
@@ -255,6 +263,7 @@ class UserService(OboUserService):
         self._manifest = manifest
 
     @retry
+    @tool("Retrieve detailed information about a specific user.", is_admin=True)
     async def get_user_detail(self, user_id: int) -> V2UserDetail:
         """Retrieve user details of a particular user.
         See: 'Get User v2 <https://developers.symphony.com/restapi/reference/get-user-v2>'_
@@ -266,6 +275,7 @@ class UserService(OboUserService):
         return await self._user_api.v2_admin_user_uid_get(**params)
 
     @retry
+    @tool("List all users in the company (pod).", is_admin=True)
     async def list_user_details(self, skip: int = 0, limit: int = 50) -> List[V2UserDetail]:
         """Retrieve all users in the company (pod).
         See: 'List Users V2 <https://developers.symphony.com/restapi/reference/list-users-v2>'_
@@ -282,6 +292,7 @@ class UserService(OboUserService):
         user_detail_list = await self._user_api.v2_admin_user_list_get(**params)
         return user_detail_list
 
+    @tool("List all users in the company (pod), handling pagination automatically.", is_admin=True)
     async def list_all_user_details(
         self, chunk_size: int = 50, max_number: int = None
     ) -> AsyncGenerator[V2UserDetail, None]:
@@ -298,6 +309,7 @@ class UserService(OboUserService):
         return offset_based_pagination(self.list_user_details, chunk_size, max_number)
 
     @retry
+    @tool("Retrieve a list of users in the company (pod) based on a filter.", is_admin=True)
     async def list_user_details_by_filter(
         self, user_filter: UserFilter, skip: int = 0, limit: int = 50
     ) -> List[UserDetail]:
@@ -318,6 +330,7 @@ class UserService(OboUserService):
         user_detail_list = await self._user_api.v1_admin_user_find_post(**params)
         return user_detail_list
 
+    @tool("List all users in the company by filter, handling pagination automatically.", is_admin=True)
     async def list_all_user_details_by_filter(
         self, user_filter: UserFilter, chunk_size: int = 50, max_number: int = None
     ) -> AsyncGenerator[V2UserDetail, None]:
@@ -339,6 +352,7 @@ class UserService(OboUserService):
         return offset_based_pagination(list_user_details_one_page, chunk_size, max_number)
 
     @retry
+    @tool("Add a role to a user.", is_admin=True)
     async def add_role(self, user_id: int, role_id: RoleId) -> None:
         """Add a role to a user.
         See: `Add Role <https://developers.symphony.com/restapi/reference/add-role>`_
@@ -354,6 +368,7 @@ class UserService(OboUserService):
         await self._user_api.v1_admin_user_uid_roles_add_post(**params)
 
     @retry
+    @tool("List all available roles in the pod.", is_admin=True)
     async def list_roles(self) -> List[RoleDetail]:
         """List all roles in the pod.
         See: `List Roles <https://developers.symphony.com/restapi/reference/list-roles>`_
@@ -365,6 +380,7 @@ class UserService(OboUserService):
         return role_list
 
     @retry
+    @tool("Remove a role from a user.", is_admin=True)
     async def remove_role(self, user_id: int, role_id: RoleId) -> None:
         """Remove a role from a user.
         See: `Remove Role <https://developers.symphony.com/restapi/reference/remove-role>`_
@@ -380,6 +396,7 @@ class UserService(OboUserService):
         await self._user_api.v1_admin_user_uid_roles_remove_post(**params)
 
     @retry
+    @tool("Get the avatar URL of a user.", is_admin=True)
     async def get_avatar(self, user_id: int) -> List[Avatar]:
         """Get the url of avatar of a user.
         See: `User Avatar <https://developers.symphony.com/restapi/reference/user-avatar>`_
@@ -392,6 +409,7 @@ class UserService(OboUserService):
         return avatar_list
 
     @retry
+    @tool("Update the avatar of a user.", is_admin=True)
     async def update_avatar(self, user_id: int, image: Union[str, bytes]) -> None:
         """Update avatar of a user.
         See: `Update User Avatar <https://developers.symphony.com/restapi/reference/update-user-avatar>`_
@@ -410,6 +428,7 @@ class UserService(OboUserService):
         await self._user_api.v1_admin_user_uid_avatar_update_post(**params)
 
     @retry
+    @tool("Get the disclaimer assigned to a user.", is_admin=True)
     async def get_disclaimer(self, user_id: int) -> Disclaimer:
         """Get disclaimer assigned to a user.
         See: `User Disclaimer <https://developers.symphony.com/restapi/reference/user-disclaimer>`_
@@ -421,6 +440,7 @@ class UserService(OboUserService):
         return await self._user_api.v1_admin_user_uid_disclaimer_get(**params)
 
     @retry
+    @tool("Unassign a disclaimer from a user.", is_admin=True)
     async def remove_disclaimer(self, user_id: int) -> None:
         """Unassign disclaimer from a user.
         See: `Unassign User Disclaimer <https://developers.symphony.com/restapi/reference/unassign-user-disclaimer>`_
@@ -431,6 +451,7 @@ class UserService(OboUserService):
         await self._user_api.v1_admin_user_uid_disclaimer_delete(**params)
 
     @retry
+    @tool("Assign a disclaimer to a user.", is_admin=True)
     async def add_disclaimer(self, user_id: int, disclaimer_id: str) -> None:
         """Assign disclaimer to a user.
         See: `Update User Disclaimer <https://developers.symphony.com/restapi/reference/update-disclaimer>`_
@@ -446,6 +467,7 @@ class UserService(OboUserService):
         await self._user_api.v1_admin_user_uid_disclaimer_update_post(**params)
 
     @retry
+    @tool("Get delegates assigned to a user.", is_admin=True)
     async def get_delegates(self, user_id: int) -> List[int]:
         """Get delegates assigned to a user.
         See: `User Delegates <https://developers.symphony.com/restapi/reference/delegates>`_
@@ -458,6 +480,7 @@ class UserService(OboUserService):
         return delegates_list
 
     @retry
+    @tool("Update delegates assigned to a user (add or remove).", is_admin=True)
     async def update_delegates(
         self, user_id: int, delegate_user_id: int, action: DelegateActionEnum
     ) -> None:
@@ -476,6 +499,7 @@ class UserService(OboUserService):
         await self._user_api.v1_admin_user_uid_delegates_update_post(**params)
 
     @retry
+    @tool("Get feature entitlements of a user.", is_admin=True)
     async def get_feature_entitlements(self, user_id: int) -> List[Feature]:
         """Get feature entitlements of a user.
         See: `User Features <https://developers.symphony.com/restapi/reference/features>`_
@@ -488,6 +512,7 @@ class UserService(OboUserService):
         return feature_list
 
     @retry
+    @tool("Update feature entitlements of a user.", is_admin=True)
     async def update_feature_entitlements(self, user_id: int, features: List[Feature]) -> None:
         """Update feature entitlements of a user.
         See: `Update User Features <https://developers.symphony.com/restapi/reference/update-features>`_
@@ -503,6 +528,7 @@ class UserService(OboUserService):
         await self._user_api.v1_admin_user_uid_features_update_post(**params)
 
     @retry
+    @tool("Get the status of a user (e.g., active, inactive).", is_admin=True)
     async def get_status(self, user_id: int) -> UserStatus:
         """Get status of a user.
         See: `User Status <https://developers.symphony.com/restapi/reference/user-status>`_
@@ -514,6 +540,7 @@ class UserService(OboUserService):
         return await self._user_api.v1_admin_user_uid_status_get(**params)
 
     @retry
+    @tool("Update the status of a user.", is_admin=True)
     async def update_status(self, user_id: int, user_status: UserStatus) -> None:
         """Update the status of a user.
         See: `Update User Status <https://developers.symphony.com/restapi/reference/update-user-status>`_
@@ -529,6 +556,7 @@ class UserService(OboUserService):
         await self._user_api.v1_admin_user_uid_status_update_post(**params)
 
     @retry
+    @tool("List users who are following a specific user.")
     async def list_user_followers(
         self, user_id: int, limit: int = 100, before: str = None, after: str = None
     ) -> FollowersListResponse:
@@ -552,6 +580,7 @@ class UserService(OboUserService):
             params["after"] = after
         return await self._user_api.v1_user_uid_followers_get(**params)
 
+    @tool("List all users who are following a specific user, handling pagination automatically.")
     async def list_all_user_followers(
         self, user_id: int, chunk_size: int = 100, max_number: int = None
     ) -> AsyncGenerator[int, None]:
@@ -572,6 +601,7 @@ class UserService(OboUserService):
         return cursor_based_pagination(user_followers_one_page, chunk_size, max_number)
 
     @retry
+    @tool("List users that a specific user is following.")
     async def list_users_following(
         self, user_id: int, limit: int = 100, before: str = None, after: str = None
     ) -> FollowingListResponse:
@@ -595,6 +625,7 @@ class UserService(OboUserService):
             params["after"] = after
         return await self._user_api.v1_user_uid_following_get(**params)
 
+    @tool("List all users that a specific user is following, handling pagination automatically.")
     async def list_all_users_following(
         self, user_id: int, chunk_size: int = 100, max_number: int = None
     ) -> AsyncGenerator[int, None]:
@@ -615,6 +646,7 @@ class UserService(OboUserService):
         return cursor_based_pagination(user_following_one_page, chunk_size, max_number)
 
     @retry
+    @tool("Create a new user account.", is_admin=True)
     async def create(self, payload: V2UserCreate) -> V2UserDetail:
         """Create a new user.
         See: `Create User v2 <https://developers.symphony.com/restapi/reference/create-user-v2>`_
@@ -626,6 +658,7 @@ class UserService(OboUserService):
         return await self._user_api.v2_admin_user_create_post(**params)
 
     @retry
+    @tool("Update an existing user's attributes.", is_admin=True)
     async def update(self, user_id: int, payload: V2UserAttributes) -> V2UserDetail:
         """Updates an existing user.
         See: `Update User v2 <https://developers.symphony.com/restapi/reference/update-user-v2>`_
@@ -642,6 +675,7 @@ class UserService(OboUserService):
         return await self._user_api.v2_admin_user_uid_update_post(**params)
 
     @retry
+    @tool("List audit trail of actions performed by privileged users.", is_admin=True)
     async def list_audit_trail(
         self,
         start_timestamp: int,
@@ -682,6 +716,7 @@ class UserService(OboUserService):
             params["after"] = after
         return await self._audit_trail_api.v1_audittrail_privilegeduser_get(**params)
 
+    @tool("List all audit trail actions by privileged users, handling pagination automatically.", is_admin=True)
     async def list_all_audit_trail(
         self,
         start_timestamp: int,
@@ -719,6 +754,7 @@ class UserService(OboUserService):
         return cursor_based_pagination(audit_trail_one_page, chunk_size, max_number)
 
     @retry
+    @tool("Suspend or reactivate a user account using a payload.", is_admin=True)
     async def suspend_user(self, user_id: int, user_suspension: UserSuspension) -> None:
         """Suspends or re-activates (unsuspend) a user account.
         See: `Suspend User Account v1 <https://developers.symphony.com/restapi/v20.10/reference/suspend-user-v1>`_
@@ -735,6 +771,7 @@ class UserService(OboUserService):
         await self._user_api.v1_admin_user_user_id_suspension_update_put(**params)
 
     @retry
+    @tool("Suspend a user account.", is_admin=True)
     async def suspend(self, user_id: int, reason: str = None, until: int = None) -> None:
         """Suspends a user account.
         Calling this endpoint requires a service account with the User Provisioning role.
@@ -757,6 +794,7 @@ class UserService(OboUserService):
         await self._user_api.v1_admin_user_user_id_suspension_update_put(**params)
 
     @retry
+    @tool("Reactivate (unsuspend) a user account.", is_admin=True)
     async def unsuspend(self, user_id: int) -> None:
         """Unsuspend (Re-activates) a user account.
         Calling this endpoint requires a service account with the User Provisioning role.
@@ -774,6 +812,7 @@ class UserService(OboUserService):
         await self._user_api.v1_admin_user_user_id_suspension_update_put(**params)
 
     @retry
+    @tool("Update the user manifest from a JSON string.", is_admin=True)
     async def update_manifest_from_json(self, manifest_data: str) -> None:
         """
         Updates the user manifest from a JSON string.
@@ -786,6 +825,7 @@ class UserService(OboUserService):
             manifest=ServiceAccountManifest(manifest=manifest_data),
         )
 
+    @tool("Update the user manifest from a file.", is_admin=True)
     async def update_manifest_from_file(self) -> None:
         """
         Updates the user manifest using the file mentioned in config.yaml under 'manifest'.
@@ -806,6 +846,7 @@ class UserService(OboUserService):
         )
 
     @retry
+    @tool("Retrieve the bot's own user manifest.", is_admin=True)
     async def get_manifest(self) -> ServiceAccountManifest:
         """Retrieves own user manifest"""
         return await self._user_api.v1_user_manifest_own_get(
